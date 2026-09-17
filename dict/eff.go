@@ -12,7 +12,7 @@ import (
 
 const effWordlistURL = "https://www.eff.org/files/2016/07/18/eff_large_wordlist.txt"
 
-const minEFFWordlistLines = 7000
+const minEFFWordlistLines = 7700
 
 // ----------------------------------------------------------------------------\\
 func downloadEFFWordlist(destPath string) error {
@@ -39,7 +39,7 @@ func downloadEFFWordlist(destPath string) error {
 	defer writer.Flush()
 
 	for scanner.Scan() {
-		fields := strings.Split(scanner.Text(), "\\t")
+		fields := strings.Split(scanner.Text(), "\t")
 		word := fields[len(fields)-1]
 		if word == "" {
 			continue

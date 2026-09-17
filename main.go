@@ -148,8 +148,11 @@ func main() {
 		effDictPath, err := dict.GetEFFDictPath()
 		checkError(err)
 		*dictPtr = effDictPath
-	} else if _, err := os.Stat(*dictPtr); os.IsNotExist(err) {
-		fmt.Fprintln(os.Stderr, "--dict file \""+*dictPtr+"\" does not exist, falling back to EFF wordlist")
+	}
+
+	// check if the dictionary file exists, if not fall back to EFF wordlist
+	if _, err := os.Stat(*dictPtr); os.IsNotExist(err) {
+		fmt.Fprintln(os.Stderr, "dictionary file \""+*dictPtr+"\" does not exist, falling back to EFF wordlist")
 		effDictPath, err := dict.GetEFFDictPath()
 		checkError(err)
 		*dictPtr = effDictPath

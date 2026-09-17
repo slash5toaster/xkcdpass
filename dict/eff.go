@@ -12,6 +12,8 @@ import (
 
 const effWordlistURL = "https://www.eff.org/files/2016/07/18/eff_large_wordlist.txt"
 
+const minEFFWordlistLines = 7000
+
 // ----------------------------------------------------------------------------\\
 func downloadEFFWordlist(destPath string) error {
 	resp, err := http.Get(effWordlistURL)
@@ -30,14 +32,14 @@ func downloadEFFWordlist(destPath string) error {
 	}
 	defer out.Close()
 
-	// the EFF wordlist is tab-separated "diceroll\tword" per line;
+	// the EFF wordlist is tab-separated "diceroll\\tword" per line;
 	// keep only the word so getRandomWord's punctuation stripping doesn't mangle it
 	scanner := bufio.NewScanner(resp.Body)
 	writer := bufio.NewWriter(out)
 	defer writer.Flush()
 
 	for scanner.Scan() {
-		fields := strings.Split(scanner.Text(), "\t")
+		fields := strings.Split(scanner.Text(), "\\t")
 		word := fields[len(fields)-1]
 		if word == "" {
 			continue
@@ -45,6 +47,26 @@ func downloadEFFWordlist(destPath string) error {
 		fmt.Fprintln(writer, word)
 	}
 	return scanner.Err()
+}
+
+// ----------------------------------------------------------------------------\\
+func countUniqueLines(path string) (int, error) {
+	file, err := os.Open(path)
+	if err != nil {
+		return 0, err
+	}
+	defer file.Close()
+
+	uniqueLines := make(map[string]struct{})
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		uniqueLines[scanner.Text()] = struct{}{}
+	}
+	if err := scanner.Err(); err != nil {
+		return 0, err
+	}
+
+	return len(uniqueLines), nil
 }
 
 // ----------------------------------------------------------------------------\\
@@ -63,7 +85,25 @@ func GetEFFDictPath() (string, error) {
 
 	destPath := filepath.Join(xkcdCacheDir, "eff_large_wordlist.txt")
 
+	needsDownload := false
 	if _, err := os.Stat(destPath); os.IsNotExist(err) {
+		needsDownload = true
+	} else if err != nil {
+		return "", err
+	} else {
+		uniqueLines, err := countUniqueLines(destPath)
+		if err != nil {
+			return "", err
+		}
+		if uniqueLines < minEFFWordlistLines {
+			if err := os.Remove(destPath); err != nil {
+				return "", err
+			}
+			needsDownload = true
+		}
+	}
+
+	if needsDownload {
 		if err := downloadEFFWordlist(destPath); err != nil {
 			return "", err
 		}

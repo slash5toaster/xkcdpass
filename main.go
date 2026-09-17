@@ -11,16 +11,14 @@ import (
 	"io"
 	"math"
 	"math/rand"
-	"net/http"
 	"os"
-	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
 	"time"
-)
 
-const effWordlistURL = "https://www.eff.org/files/2016/07/18/eff_large_wordlist.txt"
+	"xkcdpass/dict"
+)
 
 // ----------------------------------------------------------------------------\\
 func checkError(e error) {
@@ -53,7 +51,7 @@ func countLinesInFile(fileName string) (int, error) {
 		lines += bytes.Count(buf[:readBytes], []byte{'\n'})
 	}
 
-	return lines, nil
+	// return lines, nil
 }
 
 // ----------------------------------------------------------------------------\\
@@ -112,12 +110,15 @@ func getRandomWord(dictFile string) string {
 		// scan the file until we get to our desired line.
 		scanner := bufio.NewScanner(f)
 		for lineNumb := 0; lineNumb <= chosenLine; lineNumb++ {
-			scanner.Scan()
+			if !scanner.Scan() {
+				break
+			}
 			if lineNumb == chosenLine {
 				chosenWord = scanner.Text()
 				break
 			}
 		}
+		checkError(scanner.Err())
 		// remove punctuation from string
 		reg := regexp.MustCompile("[^a-zA-Z0-9]+")
 		myWord = reg.ReplaceAllString(chosenWord, "")
@@ -126,64 +127,6 @@ func getRandomWord(dictFile string) string {
 		myWord = strconv.FormatInt(int64(getRandomNumber(18)), 16)
 	}
 	return myWord
-}
-
-// ----------------------------------------------------------------------------\\
-func downloadEFFWordlist(destPath string) error {
-	resp, err := http.Get(effWordlistURL)
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("failed to download EFF wordlist: %s", resp.Status)
-	}
-
-	out, err := os.Create(destPath)
-	if err != nil {
-		return err
-	}
-	defer out.Close()
-
-	// the EFF wordlist is tab-separated "diceroll\tword" per line;
-	// keep only the word so getRandomWord's punctuation stripping doesn't mangle it
-	scanner := bufio.NewScanner(resp.Body)
-	writer := bufio.NewWriter(out)
-	defer writer.Flush()
-
-	for scanner.Scan() {
-		fields := strings.Split(scanner.Text(), "\t")
-		word := fields[len(fields)-1]
-		if word == "" {
-			continue
-		}
-		fmt.Fprintln(writer, word)
-	}
-	return scanner.Err()
-}
-
-// ----------------------------------------------------------------------------\\
-func getEFFDictPath() (string, error) {
-	cacheDir, err := os.UserCacheDir()
-	if err != nil {
-		cacheDir = os.TempDir()
-	}
-
-	xkcdCacheDir := filepath.Join(cacheDir, "xkcdpass")
-	if err := os.MkdirAll(xkcdCacheDir, 0o755); err != nil {
-		return "", err
-	}
-
-	destPath := filepath.Join(xkcdCacheDir, "eff_large_wordlist.txt")
-
-	if _, err := os.Stat(destPath); os.IsNotExist(err) {
-		if err := downloadEFFWordlist(destPath); err != nil {
-			return "", err
-		}
-	}
-
-	return destPath, nil
 }
 
 // ----------------------------------------------------------------------------\\
@@ -202,7 +145,12 @@ func main() {
 	flag.Parse()
 
 	if *effPtr {
-		effDictPath, err := getEFFDictPath()
+		effDictPath, err := dict.GetEFFDictPath()
+		checkError(err)
+		*dictPtr = effDictPath
+	} else if _, err := os.Stat(*dictPtr); os.IsNotExist(err) {
+		fmt.Fprintln(os.Stderr, "--dict file \""+*dictPtr+"\" does not exist, falling back to EFF wordlist")
+		effDictPath, err := dict.GetEFFDictPath()
 		checkError(err)
 		*dictPtr = effDictPath
 	}

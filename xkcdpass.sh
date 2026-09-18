@@ -14,7 +14,7 @@ SPCHARLIST=("@" "#" "$" "%" "^" "&" "+" "_")
 effWordlistURL="https://www.eff.org/files/2016/07/18/eff_large_wordlist.txt"
 
 # Functions
-  usageHelp="Usage: ${0##*/}"
+  usageHelp="Usage: ${0##*/} <command line parameters>"
 defaultHelp="  -h help "
  digitsHelp="  -n Number of digits (e.g. -n 3 gives 000-999) defaults to 3, max 10"
  spcharHelp="  -s Adds special characters '(${SPCHARLIST[*]})'"

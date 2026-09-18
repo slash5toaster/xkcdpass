@@ -34,7 +34,7 @@ bullseye302Acronym&
 The original bash version has been included for history's sake, it has been updated to use the EFF long word list as a fallback, and has an option to use that as the source dictionary.
 
 ```bash
-./xkcdpass.sh -h
+xkcdpass.sh -h
 Usage: xkcdpass.sh
   -h help 
   -n Number of digits (e.g. -n 3 gives 000-999) defaults to 3, max 10

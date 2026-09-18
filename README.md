@@ -36,7 +36,7 @@ The original bash version has been included for history's sake, it has been upda
 ```bash
 xkcdpass.sh -h
 Usage: xkcdpass.sh
-  -h help 
+  -h help
   -n Number of digits (e.g. -n 3 gives 000-999) defaults to 3, max 10
   -s Adds special characters '(@ # $ % ^ & + _)'
   -e Use the EFF long word list as the dictionary

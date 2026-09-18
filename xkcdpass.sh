@@ -89,9 +89,9 @@ getEFFDictonary()
   # make the cache dir and pull the dictionary
   cacheDir="${HOME}/.cache/xkcdpass"
   mkdir -p "${cacheDir}"
-  
+
   DICTIONARY="${cacheDir}/eff_large_wordlist.txt"
-  
+
   if [[ ! -s "${DICTIONARY}" ]]; then
     curl -s -o "${DICTIONARY}" "${effWordlistURL}"
     # only take the field of the word (second column)
